@@ -21,6 +21,8 @@
 #define ROTARY_ENCODER_VCC_PIN 18
 #define ROTARY_ENCODER_STEPS 4
 
+#define CALIBRATION_BUTTON 17
+
 // The remote service we wish to connect to.
 static BLEUUID serviceUUID("0000FFE0-0000-1000-8000-00805F9B34FB");
 // The characteristic of the remote service we are interested in.
@@ -217,7 +219,9 @@ class MyAdvertisedDeviceCallbacks: public BLEAdvertisedDeviceCallbacks {
 void setup() {
   Serial.begin(115200);
   Serial.println("Starting Arduino BLE Client application...");
-  // while(true);
+
+  pinMode(CALIBRATION_BUTTON, INPUT_PULLUP);
+  
   rotaryEncoder.begin();
   rotaryEncoder.setup(readEncoderISR);
   bool circleValues = false;
@@ -250,8 +254,6 @@ void setup() {
   pBLEScan->start(30, false);
 } // End of setup.
 
-bool once = false;
-
 // This is the Arduino main loop function.
 void loop() {
   rotary_loop();
@@ -272,10 +274,10 @@ void loop() {
   // with the current time since boot.
   if (connected) {
 
-    if (once) {
-      once = false;
-
-      String newValue = "T50.00";
+    if (digitalRead(CALIBRATION_BUTTON) == LOW) {
+      delay(100); // debounce
+      while (digitalRead(CALIBRATION_BUTTON) == LOW);
+      String newValue = "cal";
       Serial.println("Setting new characteristic value to \"" + newValue + "\"");
 
       // Set the characteristic's value to be the array of bytes that is actually a string.
